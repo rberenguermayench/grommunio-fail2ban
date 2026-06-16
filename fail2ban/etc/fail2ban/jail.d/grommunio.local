@@ -1,0 +1,94 @@
+# Local grommunio overrides.
+#
+# Keep the distribution-style jail.local as the base and enable only the jails
+# required for this deployment here.
+
+[DEFAULT]
+
+# grommunio uses firewalld as firewall.
+banaction = firewallcmd-ipset
+banaction_allports = firewallcmd-allports
+
+# Prefer systemd logging by default; log-file based jails override this.
+backend = systemd
+
+ignoreip = 127.0.0.1/8 ::1
+bantime = 30m
+findtime = 10m
+maxretry = 3
+
+destemail = __FAIL2BAN_DESTEMAIL__
+sender = __FAIL2BAN_SENDER__
+action = %(action_mwl)s
+
+[sshd]
+enabled = true
+mode = aggressive
+
+[postfix-sasl]
+enabled = true
+backend = systemd
+maxretry = 3
+bantime = 2h
+filter = postfix[mode=auth]
+
+[pam-generic]
+# Enable only if needed; without journalmatch this can be expensive.
+#enabled = true
+banaction = %(banaction_allports)s
+
+[nginx-http-auth]
+enabled = true
+backend = auto
+logpath = /var/log/nginx/nginx-web-error.log
+
+[nginx-limit-req]
+#enabled = true
+backend = auto
+logpath = /var/log/nginx/nginx-web-error.log
+
+[nginx-botsearch]
+enabled = true
+backend = auto
+logpath = /var/log/nginx/nginx-access.log
+maxretry = 2
+
+[grommunio-web-auth]
+enabled = true
+backend = auto
+logpath = /var/log/nginx/nginx-web-error.log
+port = http,https
+banaction = %(banaction_allports)s
+bantime = 600
+
+[grommunio-sync]
+enabled = true
+backend = auto
+logpath = /var/log/grommunio-sync/grommunio-sync.log
+port = http,https
+banaction = %(banaction_allports)s
+bantime = 3600
+maxretry = 9
+
+[grommunio-imap]
+enabled = true
+action = %(action_mw)s
+maxretry = 3
+bantime = 2h
+port = imap,imaps
+
+[grommunio-pop3]
+enabled = true
+action = %(action_mw)s
+maxretry = 3
+bantime = 2h
+port = pop3,pop3s
+
+[grommunio-dav]
+enabled = true
+backend = auto
+action = %(banaction_allports)s
+logpath = /var/log/grommunio-dav/dav.log
+maxretry = 3
+bantime = 2h
+port = http,https
