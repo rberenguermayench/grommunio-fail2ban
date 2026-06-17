@@ -112,7 +112,7 @@ detect_public_ip() {
   fi
 
   detected_ip="$(echo "${detected_ip}" | head -n 1 | tr -d '[:space:]')"
-  if [[ -n "${detected_ip}" && is_ip_or_cidr "${detected_ip}" ]]; then
+  if [[ -n "${detected_ip}" ]] && is_ip_or_cidr "${detected_ip}"; then
     echo "${detected_ip}"
   fi
 }
