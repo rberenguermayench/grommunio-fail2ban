@@ -2,6 +2,8 @@
 
 Configuracions per desplegar `fail2ban` en un servidor grommunio, amb filtres, jails, configuracio nginx per `X-Forwarded-For` i script auxiliar d'unban.
 
+El fitxer `fail2ban/etc/fail2ban/jail.d/grommunio.local` aplica un perfil PARANOID pensat per servidors exposats a Internet: bans de 24 hores, bans escalables i jail `recidive` per reincidents.
+
 Fonts originals:
 
 - (c) 2020-2025 Walter Hofstaedtler
@@ -84,6 +86,8 @@ Revisa aquests fitxers despres del desplegament:
 - `/etc/fail2ban/jail.local`
 - `/etc/fail2ban/jail.d/grommunio.local`
 - `/etc/nginx/conf.d/x-forewarded-for.conf`
+
+El perfil actual envia notificacions per correu amb whois i linies de log (`action = %(action_mwl)s`). Els valors `destemail` i `sender` es generen des del `.env`.
 
 Despres de modificar la configuracio de nginx:
 

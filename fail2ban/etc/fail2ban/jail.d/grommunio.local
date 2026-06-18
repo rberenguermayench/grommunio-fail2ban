@@ -1,94 +1,192 @@
-# Local grommunio overrides.
-#
-# Keep the distribution-style jail.local as the base and enable only the jails
-# required for this deployment here.
+# Fail2ban configuration for grommunio - PARANOID profile
+# Adapted for public Internet exposed server.
+# Ramon Berenguer - Mon Informatic
 
 [DEFAULT]
 
-# grommunio uses firewalld as firewall.
+# Firewall integration.
 banaction = firewallcmd-ipset
 banaction_allports = firewallcmd-allports
 
-# Prefer systemd logging by default; log-file based jails override this.
 backend = systemd
 
+# Never ban localhost.
 ignoreip = 127.0.0.1/8 ::1
-bantime = 30m
-findtime = 10m
-maxretry = 3
 
+# PARANOID settings.
+findtime = 30m
+maxretry = 3
+bantime = 24h
+
+# Escalating bans.
+bantime.increment = true
+bantime.factor = 4
+bantime.maxtime = 24w
+
+# Email settings, generated from .env during deploy.
 destemail = __FAIL2BAN_DESTEMAIL__
 sender = __FAIL2BAN_SENDER__
+
+# Ban and send an email with whois report and relevant log lines.
 action = %(action_mwl)s
+
+
+#
+# SSH protection
+#
 
 [sshd]
 enabled = true
 mode = aggressive
 
+maxretry = 3
+findtime = 15m
+bantime = 7d
+
+banaction = %(banaction_allports)s
+
+
+#
+# SMTP authentication
+#
+
 [postfix-sasl]
 enabled = true
 backend = systemd
-maxretry = 3
-bantime = 2h
 filter = postfix[mode=auth]
 
-[pam-generic]
-# Enable only if needed; without journalmatch this can be expensive.
-#enabled = true
+maxretry = 3
+findtime = 15m
+bantime = 24h
+
 banaction = %(banaction_allports)s
+
+
+#
+# Web authentication
+#
 
 [nginx-http-auth]
 enabled = true
 backend = auto
 logpath = /var/log/nginx/nginx-web-error.log
 
-[nginx-limit-req]
-#enabled = true
-backend = auto
-logpath = /var/log/nginx/nginx-web-error.log
+maxretry = 3
+findtime = 15m
+bantime = 24h
+
+banaction = %(banaction_allports)s
+
+
+#
+# Web scanners / bots
+#
 
 [nginx-botsearch]
 enabled = true
 backend = auto
 logpath = /var/log/nginx/nginx-access.log
-maxretry = 2
+
+maxretry = 1
+findtime = 10m
+bantime = 48h
+
+banaction = %(banaction_allports)s
+
+
+#
+# Grommunio web login
+#
 
 [grommunio-web-auth]
 enabled = true
 backend = auto
 logpath = /var/log/nginx/nginx-web-error.log
 port = http,https
+
+maxretry = 3
+findtime = 15m
+bantime = 24h
+
 banaction = %(banaction_allports)s
-bantime = 600
+
+
+#
+# ActiveSync
+#
 
 [grommunio-sync]
 enabled = true
 backend = auto
 logpath = /var/log/grommunio-sync/grommunio-sync.log
 port = http,https
+
+# Slightly relaxed for mobile clients.
+maxretry = 6
+findtime = 30m
+bantime = 12h
+
 banaction = %(banaction_allports)s
-bantime = 3600
-maxretry = 9
+
+
+#
+# IMAP
+#
 
 [grommunio-imap]
 enabled = true
-action = %(action_mw)s
-maxretry = 3
-bantime = 2h
 port = imap,imaps
+
+maxretry = 3
+findtime = 15m
+bantime = 24h
+
+banaction = %(banaction_allports)s
+
+
+#
+# POP3
+#
 
 [grommunio-pop3]
 enabled = true
-action = %(action_mw)s
-maxretry = 3
-bantime = 2h
 port = pop3,pop3s
+
+maxretry = 3
+findtime = 15m
+bantime = 24h
+
+banaction = %(banaction_allports)s
+
+
+#
+# DAV access
+#
 
 [grommunio-dav]
 enabled = true
 backend = auto
-action = %(banaction_allports)s
 logpath = /var/log/grommunio-dav/dav.log
-maxretry = 3
-bantime = 2h
 port = http,https
+
+maxretry = 3
+findtime = 15m
+bantime = 24h
+
+banaction = %(banaction_allports)s
+
+
+#
+# Recidive - punish repeat attackers
+#
+
+[recidive]
+enabled = true
+backend = auto
+logpath = /var/log/fail2ban.log
+
+findtime = 1d
+maxretry = 3
+bantime = 24w
+
+banaction = %(banaction_allports)s
